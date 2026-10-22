@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Expo & React Native
+.expo/
+.expo-shared/
+web-build/
+dist/
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.keystore
+
+# Native build artifacts (if prebuild is executed)
+android/
+ios/
+*/android/
+*/ios/
+*.apk
+*.aab
+*.ipa
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.sw?
