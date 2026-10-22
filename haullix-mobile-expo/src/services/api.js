@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Server manzili (Local dev yoki Cloud Run)
-const API_BASE_URL = 'http://localhost:5000/api';
+// Server manzili (VPS Nginx reverse proxy orqali)
+const API_BASE_URL = 'http://169.58.77.15/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
