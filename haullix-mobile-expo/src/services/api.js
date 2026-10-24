@@ -63,6 +63,7 @@ export const ordersAPI = {
   accept: (id) => data(api.post(`/orders/${id}/accept`)),
   complete: (id) => data(api.post(`/orders/${id}/complete`)),
   reviewDriver: (id, review) => data(api.post(`/orders/${id}/review`, review)),
+  getMyReviews: () => data(api.get('/orders/reviews/me')),
 };
 
 // Matching API

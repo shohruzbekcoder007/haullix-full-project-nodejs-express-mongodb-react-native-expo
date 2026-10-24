@@ -7,6 +7,7 @@ router.use(authenticate, requireUser);
 
 router.get('/', orderController.getOrders);
 router.get('/active-tracking', orderController.getActiveTracking);
+router.get('/reviews/me', orderController.getMyReviews);
 router.post('/', requireRole('cargo_owner'), orderController.createOrder);
 router.get('/:id', orderController.getOrder);
 router.put('/:id', requireRole('cargo_owner'), orderController.updateOrder);

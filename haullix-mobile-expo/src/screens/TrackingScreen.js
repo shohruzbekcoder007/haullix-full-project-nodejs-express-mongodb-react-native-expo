@@ -232,6 +232,13 @@ export default function TrackingScreen({ navigation, route }) {
 
         {isOwner && order.status === 'active' ? (
           <SecondaryButton
+            title="Tahrirlash"
+            onPress={() => navigation.navigate('EditOrder', { orderId: order._id })}
+          />
+        ) : null}
+
+        {isOwner && order.status === 'active' ? (
+          <SecondaryButton
             title="Buyurtmani bekor qilish"
             color={colors.danger}
             loading={acting}

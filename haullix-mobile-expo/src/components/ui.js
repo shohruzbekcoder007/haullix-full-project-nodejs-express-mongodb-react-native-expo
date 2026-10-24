@@ -4,18 +4,30 @@ import {
   Modal, FlatList, Pressable, Image,
 } from 'react-native';
 import Svg, { Rect, Circle, Ellipse, ClipPath, Defs, G } from 'react-native-svg';
-import { ArrowLeft, X } from 'lucide-react-native';
+import { ArrowLeft, Menu, X } from 'lucide-react-native';
 import { colors } from '../theme';
 
-// Yuqoridagi orqaga / yopish tugmalari
-export function TopBar({ onBack, onClose, color = colors.text, style }) {
+// Yuqoridagi orqaga / menyu / yopish tugmalari. right — o'ng tomondagi ixtiyoriy element
+export function TopBar({ onBack, onMenu, onClose, right, color = colors.text, style }) {
+  let left = <View />;
+  if (onBack) {
+    left = (
+      <TouchableOpacity onPress={onBack} hitSlop={12} accessibilityLabel="Orqaga">
+        <ArrowLeft color={color} size={26} strokeWidth={2} />
+      </TouchableOpacity>
+    );
+  } else if (onMenu) {
+    left = (
+      <TouchableOpacity onPress={onMenu} hitSlop={12} accessibilityLabel="Menyu">
+        <Menu color={color} size={26} strokeWidth={2} />
+      </TouchableOpacity>
+    );
+  }
+
   return (
     <View style={[styles.topBar, style]}>
-      {onBack ? (
-        <TouchableOpacity onPress={onBack} hitSlop={12} accessibilityLabel="Orqaga">
-          <ArrowLeft color={color} size={26} strokeWidth={2} />
-        </TouchableOpacity>
-      ) : <View />}
+      {left}
+      {right}
       {onClose ? (
         <TouchableOpacity onPress={onClose} hitSlop={12} accessibilityLabel="Yopish">
           <X color={color} size={26} strokeWidth={2} />

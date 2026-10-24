@@ -7,7 +7,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ArrowRight, ChevronRight, Package } from 'lucide-react-native';
 import { ordersAPI, getErrorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { ScreenTitle, PrimaryButton } from '../components/ui';
+import { TopBar, ScreenTitle, PrimaryButton } from '../components/ui';
+import { useSidebar } from '../context/SidebarContext';
 import { formatDayMonth, formatSum } from '../utils/format';
 import { colors, STATUS_INFO } from '../theme';
 
@@ -38,6 +39,7 @@ export function OrderCard({ order, onPress, badge }) {
 }
 
 export default function OrdersScreen({ navigation }) {
+  const sidebar = useSidebar();
   const { role } = useAuth();
   const isDriver = role === 'driver';
   const [orders, setOrders] = useState([]);
@@ -89,7 +91,12 @@ export default function OrdersScreen({ navigation }) {
         data={orders}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.container}
-        ListHeaderComponent={<ScreenTitle>{isDriver ? 'Reyslarim' : 'Buyurtmalarim'}</ScreenTitle>}
+        ListHeaderComponent={
+          <>
+            <TopBar onMenu={sidebar?.open} />
+            <ScreenTitle>{isDriver ? 'Reyslarim' : 'Buyurtmalarim'}</ScreenTitle>
+          </>
+        }
         ListEmptyComponent={empty}
         renderItem={({ item }) => (
           <OrderCard order={item} onPress={() => navigation.navigate('Tracking', { orderId: item._id })} />
@@ -108,7 +115,7 @@ export default function OrdersScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
+  container: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: 16,

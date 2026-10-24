@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '../components/DateTimePicker';
@@ -10,25 +10,8 @@ import { ordersAPI, getErrorMessage } from '../services/api';
 import { TopBar, ScreenTitle, Label, Field, PrimaryButton, PickerModal } from '../components/ui';
 import { formatDateInput, formatMoney } from '../utils/format';
 import { colors } from '../theme';
-
-const CARGO_TYPES = [
-  "Bug'doy",
-  'Qurilish materiallari',
-  'Oziq-ovqat mahsulotlari',
-  'Meva-sabzavot',
-  'Maishiy texnika',
-  'Mebel',
-  'Kiyim-kechak',
-  'Kimyoviy moddalar',
-  "Qishloq xo'jaligi",
-  'Boshqa',
-];
-
-const PLACES = [
-  'Toshkent', 'Toshkent viloyati', 'Samarqand', 'Buxoro', 'Navoiy', 'Qarshi', 'Termiz',
-  'Jizzax', 'Guliston', 'Namangan', 'Andijon', "Farg'ona", "Qo'qon", 'Urganch', 'Nukus',
-  'Chirchiq', 'Angren', 'Olmaliq', 'Shahrisabz', 'Denov', 'Kattaqo\'rg\'on', 'Marg\'ilon',
-];
+import { CARGO_TYPES, PLACES } from '../constants';
+import { useSidebar } from '../context/SidebarContext';
 
 const EMPTY = {
   cargoType: '',
@@ -41,11 +24,35 @@ const EMPTY = {
   payerId: '',
 };
 
-export default function PostCargoScreen({ navigation }) {
+// Yangi yuk joylash (tab) yoki mavjud buyurtmani tahrirlash (route.params.orderId)
+export default function PostCargoScreen({ navigation, route }) {
+  const sidebar = useSidebar();
+  const editId = route?.params?.orderId;
   const [form, setForm] = useState(EMPTY);
   const [picker, setPicker] = useState(null); // 'cargo' | 'from' | 'to'
   const [showDate, setShowDate] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingOrder, setLoadingOrder] = useState(!!editId);
+
+  useEffect(() => {
+    if (!editId) return;
+    ordersAPI.getOrder(editId)
+      .then(({ order }) => setForm({
+        cargoType: order.cargoType,
+        fromCity: order.fromCity,
+        toCity: order.toCity,
+        volume: String(order.volumeM3),
+        price: String(order.price),
+        date: new Date(order.deliveryDate),
+        payerName: order.payerName || '',
+        payerId: order.payerId || '',
+      }))
+      .catch((e) => {
+        Alert.alert('Xatolik', getErrorMessage(e));
+        navigation.goBack();
+      })
+      .finally(() => setLoadingOrder(false));
+  }, [editId]);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -72,18 +79,25 @@ export default function PostCargoScreen({ navigation }) {
       return;
     }
 
+    const payload = {
+      cargoType: form.cargoType,
+      fromCity: form.fromCity,
+      toCity: form.toCity,
+      volumeM3: Number(form.volume),
+      price: Number(form.price),
+      deliveryDate: formatDateInput(form.date),
+      payerName: form.payerName.trim(),
+      payerId: form.payerId.trim(),
+    };
+
     setLoading(true);
     try {
-      await ordersAPI.createOrder({
-        cargoType: form.cargoType,
-        fromCity: form.fromCity,
-        toCity: form.toCity,
-        volumeM3: Number(form.volume),
-        price: Number(form.price),
-        deliveryDate: formatDateInput(form.date),
-        payerName: form.payerName.trim(),
-        payerId: form.payerId.trim(),
-      });
+      if (editId) {
+        await ordersAPI.update(editId, payload);
+        navigation.goBack();
+        return;
+      }
+      await ordersAPI.createOrder(payload);
       setForm(EMPTY);
       Alert.alert('Tayyor', 'Yukingiz joylashtirildi. Haydovchilar uni ko\'rishadi.', [
         { text: 'OK', onPress: () => navigation.navigate('OrdersTab') },
@@ -98,13 +112,22 @@ export default function PostCargoScreen({ navigation }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  if (loadingOrder) {
+    return (
+      <SafeAreaView style={[styles.safeArea, styles.centered]}>
+        <ActivityIndicator color={colors.primary} size="large" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={editId ? ['top', 'bottom'] : ['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <TopBar onBack={navigation.canGoBack() ? navigation.goBack : null} />
-          <ScreenTitle>Yuk joylash</ScreenTitle>
+          {/* Tahrirlashda orqaga, tabda esa yon menyu */}
+          <TopBar onBack={editId ? navigation.goBack : null} onMenu={sidebar?.open} />
+          <ScreenTitle>{editId ? 'Buyurtmani tahrirlash' : 'Yuk joylash'}</ScreenTitle>
 
           <Label>Tovar turi</Label>
           <Field
@@ -166,7 +189,7 @@ export default function PostCargoScreen({ navigation }) {
           />
 
           <PrimaryButton
-            title="Tasdiqlash"
+            title={editId ? 'Saqlash' : 'Tasdiqlash'}
             icon={<Check color="#ffffff" size={22} strokeWidth={2.5} />}
             onPress={handleSubmit}
             loading={loading}
@@ -211,6 +234,7 @@ function RouteBox({ letter, value, onPress }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
+  centered: { justifyContent: 'center', alignItems: 'center' },
   container: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 32 },
   cargoText: { fontSize: 18, fontWeight: '600', color: colors.text },
   routeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

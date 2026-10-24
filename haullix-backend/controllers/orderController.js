@@ -47,6 +47,22 @@ exports.getOrders = async (req, res) => {
   }
 };
 
+// Sharhlar: haydovchi — o'zi olgan baholar, yuk egasi — o'zi yozgan baholar
+exports.getMyReviews = async (req, res) => {
+  try {
+    const filter = req.user.role === 'driver'
+      ? { assignedDriver: req.user._id }
+      : { owner: req.user._id };
+    const orders = await Order.find({ ...filter, 'review.rating': { $exists: true } })
+      .sort({ 'review.createdAt': -1 })
+      .select('orderNumber cargoType fromCity toCity ownerName driverName assignedDriver review');
+
+    res.status(200).json({ success: true, count: orders.length, reviews: orders });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // Bitta buyurtma (egasi, biriktirilgan haydovchi yoki faol yukni ko'rayotgan haydovchi)
 exports.getOrder = async (req, res) => {
   try {

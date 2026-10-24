@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { TopBar, UserAvatar, UzFlag, PrimaryButton } from '../components/ui';
 import { formatPhone, fullName } from '../utils/format';
 import { colors, ROLE_LABELS } from '../theme';
-import { SUPPORT_TEXT } from './ProfileScreen';
+import { SUPPORT_TEXT } from '../constants';
 
 const soon = (title) => () => Alert.alert(title, "Bu bo'lim keyingi versiyada qo'shiladi");
 
@@ -63,7 +63,7 @@ export default function SettingsScreen({ navigation }) {
       { Icon: Repeat, label: "Rolni o'zgartirish", value: switching ? '...' : ROLE_LABELS[role], onPress: handleRole },
       { Icon: ShoppingBag, label: 'Buyurtmalarim', onPress: () => navigation.navigate('MainTabs', { screen: 'OrdersTab' }) },
       { Icon: RotateCcw, label: 'Qaytarishlar', onPress: soon('Qaytarishlar') },
-      { Icon: Star, label: 'Sharhlarim', onPress: soon('Sharhlarim') },
+      { Icon: Star, label: 'Sharhlarim', onPress: () => navigation.navigate('Reviews') },
     ],
     [
       { Icon: MessageSquare, label: 'Chatlarim', onPress: soon('Chatlarim') },

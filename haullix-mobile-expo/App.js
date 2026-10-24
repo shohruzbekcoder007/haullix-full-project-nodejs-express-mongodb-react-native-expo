@@ -14,6 +14,8 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SettingsScreen from './src/screens/SettingsScreen';
 import DriverDetailScreen from './src/screens/DriverDetailScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
+import PostCargoScreen from './src/screens/PostCargoScreen';
+import ReviewsScreen from './src/screens/ReviewsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +46,8 @@ export default function App() {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="Tracking" component={TrackingScreen} />
             <Stack.Screen name="DriverDetail" component={DriverDetailScreen} />
+            <Stack.Screen name="EditOrder" component={PostCargoScreen} />
+            <Stack.Screen name="Reviews" component={ReviewsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </AuthProvider>
