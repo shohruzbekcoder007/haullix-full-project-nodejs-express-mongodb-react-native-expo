@@ -1,66 +1,65 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { PackagePlus, Package, Search, Truck, User } from 'lucide-react-native';
 
-import MatchingScreen from '../screens/MatchingScreen';
+import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme';
+import PostCargoScreen from '../screens/PostCargoScreen';
 import OrdersScreen from '../screens/OrdersScreen';
-import FinesScreen from '../screens/FinesScreen';
+import MatchingScreen from '../screens/MatchingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
+const tabIcon = (Icon) => ({ color, size }) => <Icon color={color} size={size} strokeWidth={2} />;
+
 export default function MainTabNavigator() {
+  const { role } = useAuth();
+  const isDriver = role === 'driver';
+
   return (
+    // key: rol o'zgarganda tablar qaytadan quriladi
     <Tab.Navigator
+      key={role}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0f172a',
-          borderTopColor: '#1e293b',
-          borderTopWidth: 1,
-          height: 65,
-          paddingBottom: 10,
+          backgroundColor: '#ffffff',
+          borderTopColor: colors.borderSoft,
+          height: 64,
+          paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#38bdf8',
-        tabBarInactiveTintColor: '#64748b',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSoft,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
       }}
     >
-      <Tab.Screen
-        name="MatchingTab"
-        component={MatchingScreen}
-        options={{
-          tabBarLabel: 'Mos yuklar',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚡</Text>,
-        }}
-      />
+      {isDriver ? (
+        <Tab.Screen
+          name="MatchingTab"
+          component={MatchingScreen}
+          options={{ tabBarLabel: 'Mos yuklar', tabBarIcon: tabIcon(Search) }}
+        />
+      ) : (
+        <Tab.Screen
+          name="PostCargoTab"
+          component={PostCargoScreen}
+          options={{ tabBarLabel: 'Yuk joylash', tabBarIcon: tabIcon(PackagePlus) }}
+        />
+      )}
       <Tab.Screen
         name="OrdersTab"
         component={OrdersScreen}
         options={{
-          tabBarLabel: 'Buyurtmalar',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📦</Text>,
-        }}
-      />
-      <Tab.Screen
-        name="FinesTab"
-        component={FinesScreen}
-        options={{
-          tabBarLabel: 'Jarimalar',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🚨</Text>,
+          tabBarLabel: isDriver ? 'Reyslarim' : 'Buyurtmalar',
+          tabBarIcon: tabIcon(isDriver ? Truck : Package),
         }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profil',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>👤</Text>,
-        }}
+        options={{ tabBarLabel: 'Profil', tabBarIcon: tabIcon(User) }}
       />
     </Tab.Navigator>
   );

@@ -1,194 +1,101 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, StatusBar, Alert, ScrollView, ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Camera, CircleHelp, Package, Settings } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import useAvatarUpload from '../hooks/useAvatarUpload';
+import { avatarUrl } from '../services/api';
+import { UserAvatar } from '../components/ui';
+import { formatPhone, fullName } from '../utils/format';
+import { colors } from '../theme';
+
+export const SUPPORT_TEXT = "Qo'llab-quvvatlash xizmati:\nTel: +998 71 200 00 00\nTelegram: @haullix_support";
 
 export default function ProfileScreen({ navigation }) {
-  const handleLogout = () => {
-    Alert.alert('Chiqish', 'Hisobdan chiqishni xohlaysizmi?', [
-      { text: 'Bekor qilish', style: 'cancel' },
-      { text: 'Chiqish', style: 'destructive', onPress: () => navigation.replace('AuthPhone') },
-    ]);
-  };
+  const { user } = useAuth();
+  const { changeAvatar, uploading } = useAvatarUpload();
+
+  const actions = [
+    { label: 'Yordam', Icon: CircleHelp, onPress: () => Alert.alert('Yordam', SUPPORT_TEXT) },
+    { label: 'Buyurtmalarim', Icon: Package, onPress: () => navigation.navigate('OrdersTab') },
+    { label: 'Sozlamalar', Icon: Settings, onPress: () => navigation.navigate('Settings') },
+  ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>SH</Text>
-        </View>
-        <Text style={styles.name}>Shohruzbek Ochilov</Text>
-        <Text style={styles.role}>🚛 Professional Haydovchi</Text>
-        <Text style={styles.phone}>+998 90 123 45 67</Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Transport vositasi</Text>
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>Rusum & Model:</Text>
-            <Text style={styles.value}>MAN TGS 18.400</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <ScrollView contentContainerStyle={styles.container}>
+        <TouchableOpacity
+          style={styles.avatarWrapper}
+          onPress={changeAvatar}
+          disabled={uploading}
+          activeOpacity={0.85}
+          accessibilityLabel="Profil rasmini o'zgartirish"
+        >
+          <UserAvatar uri={avatarUrl(user?._id, user?.avatarUpdatedAt)} size={150} />
+          {uploading ? (
+            <View style={styles.uploadingOverlay}>
+              <ActivityIndicator color="#ffffff" size="large" />
+            </View>
+          ) : null}
+          <View style={styles.cameraBadge}>
+            <Camera color="#ffffff" size={22} />
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Davlat raqami:</Text>
-            <Text style={styles.valueHighlight}>01 A 777 AA</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Yuk ko'tarish quvvati:</Text>
-            <Text style={styles.value}>22 tonna</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>1 km tarifi:</Text>
-            <Text style={styles.value}>7 500 so'm</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Statistika</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNum}>14</Text>
-            <Text style={styles.statLabel}>Bajarilgan qatnovlar</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNum}>4.9 ⭐</Text>
-            <Text style={styles.statLabel}>Mijozlar bahosi</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNum}>96%</Text>
-            <Text style={styles.statLabel}>Moslik aniqligi</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.btnBox}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Hisobdan chiqish</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+
+        <Text style={styles.userName}>{fullName(user)}</Text>
+        <Text style={styles.userPhone}>Tel: {formatPhone(user?.phone)}</Text>
+
+        <View style={styles.actionsRow}>
+          {actions.map(({ label, Icon, onPress }) => (
+            <TouchableOpacity key={label} style={styles.actionCard} onPress={onPress} activeOpacity={0.8}>
+              <Icon color={colors.primary} size={40} strokeWidth={1.8} />
+              <Text style={styles.actionLabel} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0b0f17',
-  },
-  header: {
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 24,
-    backgroundColor: '#111827',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1f2937',
-  },
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: '#2563eb',
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  container: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 72, paddingBottom: 32 },
+  avatarWrapper: { marginBottom: 22 },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 75,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  avatarText: {
-    color: '#ffffff',
-    fontSize: 26,
-    fontWeight: '800',
+  cameraBadge: {
+    position: 'absolute',
+    right: -6,
+    bottom: 4,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
   },
-  name: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  role: {
-    color: '#38bdf8',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  phone: {
-    color: '#94a3b8',
-    fontSize: 13,
-    marginTop: 2,
-  },
-  section: {
-    padding: 16,
-  },
-  sectionTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
-  label: {
-    color: '#94a3b8',
-    fontSize: 14,
-  },
-  value: {
-    color: '#f8fafc',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  valueHighlight: {
-    color: '#38bdf8',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statBox: {
+  userName: { fontSize: 26, fontWeight: '800', color: colors.text },
+  userPhone: { fontSize: 18, color: colors.textMuted, marginTop: 6 },
+  actionsRow: { flexDirection: 'row', gap: 12, marginTop: 36, alignSelf: 'stretch' },
+  actionCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 12,
-    marginHorizontal: 4,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    paddingVertical: 22,
+    paddingHorizontal: 4,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
+    gap: 12,
   },
-  statNum: {
-    color: '#10b981',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  statLabel: {
-    color: '#94a3b8',
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  btnBox: {
-    padding: 16,
-    marginBottom: 30,
-  },
-  logoutBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#ef4444',
-    fontSize: 15,
-    fontWeight: '700',
-  },
+  actionLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
 });

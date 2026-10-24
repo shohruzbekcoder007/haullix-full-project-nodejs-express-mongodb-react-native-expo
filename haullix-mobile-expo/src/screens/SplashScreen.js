@@ -1,41 +1,46 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Truck } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme';
+
+export const ONBOARDING_KEY = 'onboarding_seen';
 
 export default function SplashScreen({ navigation }) {
+  const { restore } = useAuth();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.85)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const sloganFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 900,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 5,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      Animated.timing(sloganFade, {
-        toValue: 1,
-        duration: 700,
-        useNativeDriver: true,
-      }).start(() => {
-        setTimeout(() => {
-          navigation.replace('Onboarding');
-        }, 1200);
+    const animation = new Promise((resolve) => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, friction: 5, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.timing(sloganFade, { toValue: 1, duration: 600, useNativeDriver: true }).start(() => {
+          setTimeout(resolve, 800);
+        });
       });
     });
+
+    // Animatsiya va sessiyani tiklash parallel bajariladi
+    Promise.all([animation, restore(), AsyncStorage.getItem(ONBOARDING_KEY)]).then(
+      ([, session, onboardingSeen]) => {
+        if (session === 'signed_in') navigation.replace('MainTabs');
+        else if (session === 'profile_required') navigation.replace('ProfileSetup');
+        else navigation.replace(onboardingSeen ? 'AuthPhone' : 'Onboarding');
+      }
+    );
   }, []);
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
       <Animated.View style={[styles.logoBox, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
         <View style={styles.iconCircle}>
-          <Text style={styles.truckIcon}>🚛</Text>
+          <Truck color="#ffffff" size={52} strokeWidth={1.8} />
         </View>
         <Text style={styles.title}>HAULLIX</Text>
       </Animated.View>
@@ -49,38 +54,22 @@ export default function SplashScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0f17',
-    alignItems: 'center',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
-  },
-  logoBox: {
     alignItems: 'center',
   },
+  logoBox: { alignItems: 'center', marginBottom: 24 },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#1e293b',
-    borderWidth: 2,
-    borderColor: '#f59e0b',
-    alignItems: 'center',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 18,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.4)',
   },
-  truckIcon: {
-    fontSize: 40,
-  },
-  title: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#ffffff',
-    letterSpacing: 3,
-  },
-  slogan: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#f59e0b',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
+  title: { color: '#ffffff', fontSize: 38, fontWeight: '900', letterSpacing: 5 },
+  slogan: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '600', letterSpacing: 0.5 },
 });

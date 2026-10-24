@@ -1,102 +1,136 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, FlatList, StatusBar, RefreshControl, ActivityIndicator,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { Search } from 'lucide-react-native';
+import { matchingAPI, getErrorMessage } from '../services/api';
+import { ScreenTitle, PrimaryButton } from '../components/ui';
+import { OrderCard } from './OrdersScreen';
+import { colors } from '../theme';
 
-const MOCK_MATCHES = [
-  {
-    id: '1',
-    number: '#1245',
-    from: 'Qarshi',
-    to: 'Toshkent',
-    cargo: "Bug'doy va un mahsulotlari",
-    weight: '18 tonna',
-    price: "3 500 000 so'm",
-    matchScore: 96,
-    time: 'Bugun, 18:00',
-    owner: 'Azizbek Komilov',
-  },
-  {
-    id: '2',
-    number: '#1246',
-    from: 'Qarshi',
-    to: 'Toshkent',
-    cargo: 'Qurilish mollari',
-    weight: '15 tonna',
-    price: "2 900 000 so'm",
-    matchScore: 91,
-    time: 'Bugun, 20:00',
-    owner: 'Rustam Karimov',
-  },
-  {
-    id: '3',
-    number: '#1247',
-    from: 'Qarshi',
-    to: 'Toshkent',
-    cargo: 'Polietilen granulalar',
-    weight: '20 tonna',
-    price: "4 000 000 so'm",
-    matchScore: 84,
-    time: 'Ertaga, 09:00',
-    owner: 'Jamshid Tohirov',
-  },
+const FILTERS = [
+  { key: 'all', label: 'Barchasi' },
+  { key: 'high', label: 'Yuqori mos' },
+  { key: 'price', label: 'Qimmat' },
+  { key: 'soon', label: 'Yaqin sana' },
 ];
 
-export default function MatchingScreen() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.routeHeader}>
-        <Text style={styles.routeTitle}>Qarshi ➔ Toshkent</Text>
-        <Text style={styles.routeSub}>Sizning mashinangizga 96% gacha mos qaytish yuklari</Text>
+const scoreBadge = (score) => {
+  if (score >= 80) return { label: `${score}% mos`, color: colors.primary, bg: colors.primarySoft };
+  if (score >= 50) return { label: `${score}% mos`, color: '#b45309', bg: '#fef3c7' };
+  return { label: `${score}% mos`, color: colors.textMuted, bg: colors.borderSoft };
+};
+
+export default function MatchingScreen({ navigation }) {
+  const [matches, setMatches] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await matchingAPI.getReturnLoads();
+      setMatches(res.matches || []);
+      setError(null);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const visible = useMemo(() => {
+    const list = [...matches];
+    if (filter === 'high') return list.filter((m) => m.matchScore >= 70);
+    if (filter === 'price') return list.sort((a, b) => b.price - a.price);
+    if (filter === 'soon') return list.sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate));
+    return list;
+  }, [matches, filter]);
+
+  const header = (
+    <>
+      <ScreenTitle>Mos yuklar</ScreenTitle>
+      <View style={styles.filters}>
+        {FILTERS.map((f) => {
+          const active = filter === f.key;
+          return (
+            <TouchableOpacity
+              key={f.key}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => setFilter(f.key)}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+    </>
+  );
 
-      <FlatList
-        data={MOCK_MATCHES}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardTop}>
-              <View style={styles.scoreBadge}>
-                <Text style={styles.scoreText}>{item.matchScore}% mos</Text>
-              </View>
-              <Text style={styles.timeText}>{item.time}</Text>
-            </View>
-
-            <Text style={styles.cargoTitle}>{item.cargo}</Text>
-            <Text style={styles.weightText}>{item.weight} • Tent / Fura</Text>
-
-            <View style={styles.cardBottom}>
-              <Text style={styles.priceText}>{item.price}</Text>
-              <TouchableOpacity style={styles.takeBtn}>
-                <Text style={styles.takeBtnText}>Tanlash</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
+  const empty = loading ? (
+    <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 60 }} />
+  ) : (
+    <View style={styles.empty}>
+      <Search color={colors.textSoft} size={56} strokeWidth={1.5} />
+      <Text style={styles.emptyTitle}>{error || "Hozircha bo'sh yuklar yo'q"}</Text>
+      {error ? (
+        <PrimaryButton title="Qayta urinish" onPress={() => { setLoading(true); load(); }} style={{ alignSelf: 'stretch' }} />
+      ) : (
+        <Text style={styles.emptySubtitle}>Pastga tortib yangilang</Text>
+      )}
     </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <FlatList
+        data={visible}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.container}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        renderItem={({ item }) => (
+          <OrderCard
+            order={item}
+            badge={scoreBadge(item.matchScore)}
+            onPress={() => navigation.navigate('Tracking', { orderId: item._id })}
+          />
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+            colors={[colors.primary]}
+          />
+        }
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0b0f17', padding: 16 },
-  routeHeader: { marginBottom: 16, paddingTop: 10 },
-  routeTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  routeSub: { fontSize: 13, color: '#f59e0b', marginTop: 4 },
-  card: {
-    backgroundColor: '#161f2e',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  container: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
+  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  chip: {
+    paddingHorizontal: 14,
+    height: 36,
+    justifyContent: 'center',
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  scoreBadge: { backgroundColor: '#10b981', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  scoreText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  timeText: { color: '#94a3b8', fontSize: 12 },
-  cargoTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginTop: 10 },
-  weightText: { color: '#94a3b8', fontSize: 13, marginTop: 4 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14 },
-  priceText: { color: '#f59e0b', fontSize: 17, fontWeight: '800' },
-  takeBtn: { backgroundColor: '#f59e0b', paddingHorizontal: 18, paddingVertical: 8, borderRadius: 10 },
-  takeBtnText: { color: '#000', fontWeight: '700', fontSize: 13 },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { fontSize: 14, fontWeight: '600', color: colors.text },
+  chipTextActive: { color: '#ffffff' },
+  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: 16, textAlign: 'center' },
+  emptySubtitle: { fontSize: 15, color: colors.textMuted, marginTop: 6 },
 });

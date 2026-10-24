@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -28,7 +28,8 @@
         "ACCESS_FINE_LOCATION",
         "INTERNET",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
       ]
     },
     "web": {
@@ -38,6 +39,15 @@
       "eas": {
         "projectId": "haullix-project-id"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Profil rasmini tanlash uchun galereyaga ruxsat bering",
+          "cameraPermission": "Profil rasmini olish uchun kameraga ruxsat bering"
+        }
+      ]
+    ]
   }
 }

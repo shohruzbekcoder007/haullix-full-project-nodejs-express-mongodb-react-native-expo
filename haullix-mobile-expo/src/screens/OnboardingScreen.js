@@ -1,73 +1,72 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, SafeAreaView } from 'react-native';
-
-const { width } = Dimensions.get('window');
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Truck, Zap, ShieldCheck } from 'lucide-react-native';
+import { PrimaryButton } from '../components/ui';
+import { colors } from '../theme';
+import { ONBOARDING_KEY } from './SplashScreen';
 
 const SLIDES = [
   {
-    id: '1',
-    icon: '🚛',
+    Icon: Truck,
     title: "Bo'sh qaytma, yuk bilan qayt!",
-    desc: "Yetkazib berishdan so'ng bo'sh qaytmasdan, yo'nalishingiz bo'ylab mos yuklarni toping va daromadingizni 40% ga oshiring.",
+    desc: "Yetkazib berishdan so'ng bo'sh qaytmasdan, yo'nalishingiz bo'ylab mos yuklarni toping va daromadingizni oshiring.",
   },
   {
-    id: '2',
-    icon: '⚡',
-    title: "Aqlli Qaytish Yuklari (AI Matching)",
-    desc: "Moshina hajmi, tonnaji va marshrutingizga 96% gacha mos keladigan qaytish buyurtmalarini avtomatik tanlab beramiz.",
+    Icon: Zap,
+    title: 'Aqlli qaytish yuklari',
+    desc: "Mashina hajmi, tonnaji va marshrutingizga mos keladigan buyurtmalarni avtomatik tanlab beramiz.",
   },
   {
-    id: '3',
-    icon: '🛡️',
-    title: "Radarlar va Jarimalar nazorati",
-    desc: "Yo'ldagi tezlik radarlari, yangi kameralar va transport vositangiz jarimalarini real vaqtda bepul tekshiring.",
+    Icon: ShieldCheck,
+    title: 'Yukingiz nazorat ostida',
+    desc: "Yukingiz qayerdaligini kuzating, haydovchi bilan bog'laning va xizmatni baholang.",
   },
 ];
 
 export default function OnboardingScreen({ navigation }) {
   const [currentIdx, setCurrentIdx] = useState(0);
 
-  const handleNext = () => {
-    if (currentIdx < SLIDES.length - 1) {
-      setCurrentIdx(currentIdx + 1);
-    } else {
-      navigation.replace('AuthPhone');
-    }
+  const finish = async () => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, '1');
+    navigation.replace('AuthPhone');
   };
 
-  const slide = SLIDES[currentIdx];
+  const handleNext = () => {
+    if (currentIdx < SLIDES.length - 1) setCurrentIdx(currentIdx + 1);
+    else finish();
+  };
+
+  const { Icon, title, desc } = SLIDES[currentIdx];
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.replace('AuthPhone')}>
+        <TouchableOpacity onPress={finish} hitSlop={12}>
           <Text style={styles.skipText}>O'tkazib yuborish</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
         <View style={styles.iconCircle}>
-          <Text style={styles.iconText}>{slide.icon}</Text>
+          <Icon color={colors.primary} size={52} strokeWidth={1.8} />
         </View>
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.desc}>{slide.desc}</Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.desc}>{desc}</Text>
       </View>
 
       <View style={styles.footer}>
         <View style={styles.dots}>
           {SLIDES.map((_, idx) => (
-            <View
-              key={idx}
-              style={[styles.dot, currentIdx === idx && styles.dotActive]}
-            />
+            <View key={idx} style={[styles.dot, currentIdx === idx && styles.dotActive]} />
           ))}
         </View>
-
-        <TouchableOpacity style={styles.btnPrimary} onPress={handleNext}>
-          <Text style={styles.btnText}>
-            {currentIdx === SLIDES.length - 1 ? 'Boshlash' : 'Keyingisi'}
-          </Text>
-        </TouchableOpacity>
+        <PrimaryButton
+          title={currentIdx === SLIDES.length - 1 ? 'Boshlash' : 'Keyingisi'}
+          onPress={handleNext}
+        />
       </View>
     </SafeAreaView>
   );
@@ -76,85 +75,33 @@ export default function OnboardingScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0f17',
+    backgroundColor: colors.background,
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingVertical: 20,
   },
-  header: {
-    alignItems: 'flex-end',
-    paddingTop: 10,
-  },
-  skipText: {
-    color: '#64748b',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  content: {
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
+  header: { alignItems: 'flex-end', paddingTop: 16 },
+  skipText: { color: colors.textSoft, fontSize: 15, fontWeight: '600' },
+  content: { alignItems: 'center', paddingHorizontal: 12 },
   iconCircle: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderWidth: 2,
-    borderColor: '#2563eb',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
   },
-  iconText: {
-    fontSize: 52,
-  },
   title: {
-    color: '#f8fafc',
-    fontSize: 24,
+    color: colors.text,
+    fontSize: 26,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 16,
-    lineHeight: 32,
+    lineHeight: 34,
   },
-  desc: {
-    color: '#94a3b8',
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  footer: {
-    paddingBottom: 24,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 28,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#334155',
-    marginHorizontal: 5,
-  },
-  dotActive: {
-    width: 24,
-    backgroundColor: '#2563eb',
-  },
-  btnPrimary: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    shadowColor: '#2563eb',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  btnText: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  desc: { color: colors.textMuted, fontSize: 16, textAlign: 'center', lineHeight: 24 },
+  footer: { paddingBottom: 24 },
+  dots: { flexDirection: 'row', justifyContent: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.borderSoft, marginHorizontal: 5 },
+  dotActive: { width: 24, backgroundColor: colors.primary },
 });
