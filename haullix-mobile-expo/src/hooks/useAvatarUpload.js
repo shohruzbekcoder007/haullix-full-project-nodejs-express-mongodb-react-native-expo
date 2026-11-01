@@ -65,8 +65,9 @@ export default function useAvatarUpload() {
 
   const changeAvatar = () => {
     const hasAvatar = !!user?.avatarUpdatedAt;
-    // Web'da kamera yo'q: rasm bo'lmasa, darhol fayl tanlash oynasi ochiladi
-    if (Platform.OS === 'web' && !hasAvatar) {
+    // Web'da darhol fayl oynasi ochiladi: brauzer uni faqat bosishdan so'ng bir necha soniya
+    // ichida ochishga ruxsat beradi, oraliq confirm() dialogi bu muddatni o'tkazib yuborishi mumkin
+    if (Platform.OS === 'web') {
       pick(false);
       return;
     }

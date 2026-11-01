@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
@@ -8,8 +8,9 @@ import {
   Repeat, ShoppingBag, RotateCcw, Star, MessageSquare, Bell, CircleHelp, Mail,
   ChevronRight, Pencil,
 } from 'lucide-react-native';
-import { authAPI, avatarUrl, getErrorMessage } from '../services/api';
+import { authAPI, userAvatarUrl, getErrorMessage } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import useAvatarUpload from '../hooks/useAvatarUpload';
 import { TopBar, UserAvatar, UzFlag, PrimaryButton } from '../components/ui';
 import { formatPhone, fullName } from '../utils/format';
 import { colors, ROLE_LABELS } from '../theme';
@@ -19,6 +20,7 @@ const soon = (title) => () => Alert.alert(title, "Bu bo'lim keyingi versiyada qo
 
 export default function SettingsScreen({ navigation }) {
   const { user, role, setUser, signOut } = useAuth();
+  const { changeAvatar, uploading } = useAvatarUpload();
   const [switching, setSwitching] = useState(false);
 
   const changeRole = async (nextRole) => {
@@ -85,22 +87,37 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.headerTitle}>Sozlamalar</Text>
 
           <View style={styles.profileRow}>
+            {/* Avatar — rasmni almashtirish; ism yonidagi qalam — profil ma'lumotlarini tahrirlash */}
             <TouchableOpacity
               style={styles.avatar}
-              onPress={() => navigation.navigate('ProfileSetup', { edit: true })}
+              onPress={changeAvatar}
+              disabled={uploading}
               activeOpacity={0.85}
-              accessibilityLabel="Profilni tahrirlash"
+              accessibilityLabel="Profil rasmini o'zgartirish"
             >
-              <UserAvatar uri={avatarUrl(user?._id, user?.avatarUpdatedAt)} size={118} bordered={false} />
+              <UserAvatar uri={userAvatarUrl(user)} size={118} bordered={false} />
               <View style={styles.editStrip}>
-                <Pencil color="#ffffff" size={13} />
-                <Text style={styles.editText}>To'g'rilash</Text>
+                {uploading ? <ActivityIndicator color="#ffffff" size="small" /> : (
+                  <>
+                    <Pencil color="#ffffff" size={13} />
+                    <Text style={styles.editText}>To'g'rilash</Text>
+                  </>
+                )}
               </View>
             </TouchableOpacity>
-            <View style={styles.profileInfo}>
+            <TouchableOpacity
+              style={styles.profileInfo}
+              onPress={() => navigation.navigate('ProfileSetup', { edit: true })}
+              activeOpacity={0.7}
+              accessibilityLabel="Profil ma'lumotlarini tahrirlash"
+            >
               <Text style={styles.profileName} numberOfLines={2}>{fullName(user)}</Text>
               <Text style={styles.profilePhone}>{formatPhone(user?.phone)}</Text>
-            </View>
+              <View style={styles.editInfo}>
+                <Pencil color="#ffffff" size={14} />
+                <Text style={styles.editInfoText}>Ma'lumotlarni tahrirlash</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
 
@@ -167,6 +184,8 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1 },
   profileName: { color: '#ffffff', fontSize: 24, fontWeight: '800' },
   profilePhone: { color: '#ffffff', fontSize: 17, marginTop: 6 },
+  editInfo: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, opacity: 0.9 },
+  editInfoText: { color: '#ffffff', fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
   group: {
     backgroundColor: colors.background,
     borderRadius: 18,

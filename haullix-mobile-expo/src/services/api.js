@@ -51,6 +51,10 @@ export const authAPI = {
 export const avatarUrl = (userId, version) =>
   userId ? `${API_BASE_URL}/auth/avatar/${userId}${version ? `?v=${new Date(version).getTime()}` : ''}` : null;
 
+// Joriy foydalanuvchi rasmi: rasm yuklanmagan bo'lsa so'rov yuborilmaydi (ortiqcha 404 bo'lmasin)
+export const userAvatarUrl = (user) =>
+  (user?.avatarUpdatedAt ? avatarUrl(user._id, user.avatarUpdatedAt) : null);
+
 // Orders API
 export const ordersAPI = {
   getOrders: (params) => data(api.get('/orders', { params })),

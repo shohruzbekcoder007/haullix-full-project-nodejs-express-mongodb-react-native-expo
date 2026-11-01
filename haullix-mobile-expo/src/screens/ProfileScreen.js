@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Camera, CircleHelp, Package, Settings, Truck } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import useAvatarUpload from '../hooks/useAvatarUpload';
-import { authAPI, ordersAPI, avatarUrl } from '../services/api';
+import { authAPI, ordersAPI, userAvatarUrl } from '../services/api';
 import { useSidebar } from '../context/SidebarContext';
 import { TopBar, UserAvatar } from '../components/ui';
 import { formatPhone, fullName } from '../utils/format';
@@ -73,7 +73,7 @@ export default function ProfileScreen({ navigation }) {
           activeOpacity={0.85}
           accessibilityLabel="Profil rasmini o'zgartirish"
         >
-          <UserAvatar uri={avatarUrl(user?._id, user?.avatarUpdatedAt)} size={150} />
+          <UserAvatar uri={userAvatarUrl(user)} size={150} />
           {uploading ? (
             <View style={styles.uploadingOverlay}>
               <ActivityIndicator color="#ffffff" size="large" />

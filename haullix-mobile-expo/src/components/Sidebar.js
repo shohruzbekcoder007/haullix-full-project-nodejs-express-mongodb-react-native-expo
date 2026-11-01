@@ -10,7 +10,7 @@ import {
   Home, PackagePlus, Search, Package, Truck, MapPin, Star, User, Settings, CircleHelp, LogOut,
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { avatarUrl } from '../services/api';
+import { userAvatarUrl } from '../services/api';
 import { UserAvatar } from './ui';
 import { formatPhone, fullName } from '../utils/format';
 import { colors, ROLE_LABELS } from '../theme';
@@ -97,7 +97,7 @@ export default function Sidebar({ visible, onClose }) {
 
       <Animated.View style={[styles.panel, { width: panelWidth, transform: [{ translateX }] }]}>
         <View style={[styles.header, { paddingTop: insets.top + 24 }]}>
-          <UserAvatar uri={avatarUrl(user?._id, user?.avatarUpdatedAt)} size={72} bordered={false} />
+          <UserAvatar uri={userAvatarUrl(user)} size={72} bordered={false} />
           <Text style={styles.name} numberOfLines={1}>{fullName(user)}</Text>
           <Text style={styles.phone}>{formatPhone(user?.phone)}</Text>
           <View style={styles.roleBadge}>

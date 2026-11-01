@@ -5,7 +5,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowRight, ChevronRight, PackagePlus, Search, Truck } from 'lucide-react-native';
-import { ordersAPI, matchingAPI, avatarUrl } from '../services/api';
+import { ordersAPI, matchingAPI, userAvatarUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
 import { TopBar, UserAvatar } from '../components/ui';
@@ -134,7 +134,7 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('ProfileTab')}
           accessibilityLabel="Profil"
         >
-          <UserAvatar uri={avatarUrl(user?._id, user?.avatarUpdatedAt)} size={40} bordered={false} />
+          <UserAvatar uri={userAvatarUrl(user)} size={40} bordered={false} />
         </TouchableOpacity>
 
         <Text style={styles.greeting}>{greeting()},</Text>
